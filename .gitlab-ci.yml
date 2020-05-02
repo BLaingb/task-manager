@@ -1,0 +1,19 @@
+image: node:10
+
+stages:
+  - deploy
+
+deploy:staging:
+  stage: deploy
+  environment:
+    name: staging
+  only:
+    - staging
+  before_script:
+    - wget https://dl.google.com/dl/cloudsdk/channels/rapid/downloads/google-cloud-sdk-218.0.0-linux-x86.tar.gz
+    - tar -xzf  google-cloud-sdk-218.0.0-linux-x86.tar.gz
+    - ./google-cloud-sdk/install.sh
+  script:
+    - echo $GAE_STAG_KEY_FILE > gae_auth.json
+    - ./google-cloud-sdk/bin/gcloud auth activate-service-account --key-file gae_auth.json
+    - ./google-cloud-sdk/bin/gcloud app deploy app.staging.yaml --project=$GAE_STAG_PROJECT_ID

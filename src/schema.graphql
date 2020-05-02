@@ -1,0 +1,19 @@
+scalar Date
+scalar DateTime
+
+type Query {
+  user: String
+}
+
+# type Mutation {
+# }
+
+# type Subscription {
+
+# }
+
+# type MutationResponse {
+#   id: ID
+#   success: Boolean!
+#   message: String!
+# }

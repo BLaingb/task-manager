@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./buildSeeds"
+  },
+  "include": [
+    "seeds/*.ts",
+    "src/models/*"
+  ],
+  "exclude": [
+    "src/resolvers/*",
+    "src/*.ts",
+    "src/*.graphql",
+    "node_modules",
+    "seedsBuild",
+    "build"
+  ]
+}

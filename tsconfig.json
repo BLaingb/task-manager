@@ -1,0 +1,28 @@
+{
+  "compilerOptions": {
+    "outDir": "./build",
+    "module": "commonjs",
+    "target": "es2017",
+    "moduleResolution": "node",
+    "strict": true,
+    "sourceMap": true,
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true,
+    "allowJs": true,
+    "noUnusedLocals": true,
+    "noImplicitAny": true,
+    "suppressImplicitAnyIndexErrors": true,
+    "allowSyntheticDefaultImports": true,
+    "pretty": true,
+    "removeComments": true,
+    "skipLibCheck": true,
+    "typeRoots": ["node_modules/@types", "src/@types"]
+  },
+  "files": ["src/@types/graphql.d.ts"],
+  "include": ["src/**/*"],
+  "exclude": [
+    "node_modules",
+    "seedsBuild",
+    "build"
+  ]
+}

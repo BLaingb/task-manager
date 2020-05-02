@@ -1,0 +1,32 @@
+{
+  "extends": [
+    "tslint:latest",
+    "tslint-plugin-prettier",
+    "tslint-config-prettier"
+  ],
+  "linterOptions": {
+    "exclude": [
+      "node_modules",
+      "build"
+    ]
+  },
+  "rules": {
+    "object-literal-sort-keys": false,
+    "member-ordering": false,
+    "interface-name": [
+      true,
+      "never-prefix"
+    ],
+    "curly": false,
+    "ordered-imports": false,
+    "no-object-literal-type-assertion": false,
+    "prettier": [
+      true,
+      {
+        "printWidth": 120,
+        "singleQuote": true
+      }
+    ],
+    "no-console": false
+  }
+}
