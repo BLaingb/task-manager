@@ -1,19 +1,9 @@
-import { GraphQLDate, GraphQLDateTime } from 'graphql-iso-date';
-// import { buildFederatedSchema } from '@apollo/federation';
-// import { Subscription } from './resolvers/Subscription/Subscription';
-import * as fs from 'fs';
-import * as path from 'path';
-import { makeExecutableSchema } from 'graphql-tools';
-const typeDefs = [fs.readFileSync(path.join(__dirname, 'schema.graphql'), 'utf8')];
+import { UserResolver } from './users/users.resolver';
+import { buildSchema } from 'type-graphql';
 
-const resolvers = {
-  // Query,
-  // Mutation,
-  // Subscription,
-  Date: GraphQLDate,
-  DateTime: GraphQLDateTime
+export const createSchema = async () => {
+  const schema = await buildSchema({
+    resolvers: [UserResolver]
+  });
+  return schema;
 };
-
-const executableSchema = makeExecutableSchema({ typeDefs, resolvers });
-
-export default executableSchema;

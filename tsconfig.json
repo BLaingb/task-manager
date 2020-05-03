@@ -16,7 +16,9 @@
     "pretty": true,
     "removeComments": true,
     "skipLibCheck": true,
-    "typeRoots": ["node_modules/@types", "src/@types"]
+    "typeRoots": ["node_modules/@types", "src/@types"],
+    "lib": ["ES2016", "ESNext.AsyncIterable"],
+    "strictPropertyInitialization": false
   },
   "files": ["src/@types/graphql.d.ts"],
   "include": ["src/**/*"],

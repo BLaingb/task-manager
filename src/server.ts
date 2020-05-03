@@ -1,17 +1,31 @@
+/*
+ * src/server.ts
+ * This file is used to configure the server connection and the schema
+ *
+ * Last modified: 21/04/2020
+ * Mariana Prado
+ */
+import 'reflect-metadata';
 import { ApolloServer } from 'apollo-server-express';
 import * as GraphiQL from 'apollo-server-module-graphiql';
 import * as cors from 'cors';
 import * as express from 'express';
 
-import schema from './schema';
-
 import { execute, subscribe } from 'graphql';
 import { createServer, Server } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 import * as url from 'url';
+import { getUser } from './auth';
+import { createSchema } from './schema';
 
 type ExpressGraphQLOptionsFunction = (req?: express.Request, res?: express.Response) => any | Promise<any>;
 
+/**
+ * graphiqlExpress
+ * @description GraphQL configuration
+ * @param options
+ * @returns arrow function
+ */
 function graphiqlExpress(options: GraphiQL.GraphiQLData | ExpressGraphQLOptionsFunction) {
   const graphiqlHandler = (req: express.Request, res: express.Response, next: any) => {
     const query = req.url && url.parse(req.url, true).query;
@@ -28,16 +42,24 @@ function graphiqlExpress(options: GraphiQL.GraphiQLData | ExpressGraphQLOptionsF
   return graphiqlHandler;
 }
 
+/**
+ * createConnection
+ * @description server configuration
+ * @param port
+ * @returns Server
+ */
 export default async (port: number): Promise<Server> => {
   const app = express();
 
   const server: Server = createServer(app);
   // frontend url:
   let corsOrigin: string[] = ['http://localhost:3000'];
-  if (process.env.NODE_ENV === 'staging') {
-    corsOrigin = ['https://<<staging url 1>>', 'https://<<staging url 2>>'];
+  if (process.env.NODE_ENV === 'develop-ci') {
+    corsOrigin = ['https://frontend-develop-dot-phoenix-development-2020.wl.r.appspot.com'];
+  } else if (process.env.NODE_ENV === 'staging') {
+    corsOrigin = ['https://frontend-staging-dot-phoenix-development-2020.wl.r.appspot.com'];
   } else if (process.env.NODE_ENV === 'production') {
-    corsOrigin = ['https://<<production url 1>>', 'https://<<production url 2>>'];
+    corsOrigin = ['https://origenes.natgas.com.mx'];
   }
 
   app.use(
@@ -47,19 +69,28 @@ export default async (port: number): Promise<Server> => {
     })
   );
 
+  const schema = await createSchema();
   const apolloServer = new ApolloServer({
     playground: process.env.NODE_ENV !== 'production',
     introspection: process.env.NODE_ENV !== 'production',
     schema,
-    context: ({ req }: any) => {
+    context: async ({ req }: any) => {
       // get the user token from the headers
       const token = req.headers.authorization || '';
+      let user: any;
+      if (token !== '') {
+        // try to retrieve a user with the token
+        await getUser(token.substring(7, token.length))
+          .then((response: any) => {
+            user = response;
+          })
+          .catch((error: any) => {
+            throw new Error(error);
+          });
 
-      // try to retrieve a user with the token
-      const user = `User ${token}`;
-
-      // add the user to the context
-      return { user };
+        // add the user to the context
+        return { user };
+      }
     }
   });
 
