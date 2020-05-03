@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID } from 'type-graphql';
-import { Entity, BaseEntity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, BaseEntity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn } from 'typeorm';
 
 @ObjectType()
 @Entity()
@@ -29,6 +29,10 @@ export class User extends BaseEntity {
   public active: boolean;
 
   @Field()
-  @Column()
-  public creationDate: Date;
+  @CreateDateColumn()
+  public createdAt: Date;
+
+  @Field()
+  @UpdateDateColumn()
+  public updatedAt: Date;
 }

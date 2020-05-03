@@ -1,4 +1,4 @@
-import { UserResolver } from './users/users.resolver';
+import { UserResolver } from './users/user.resolver';
 import { buildSchema } from 'type-graphql';
 
 export const createSchema = async () => {

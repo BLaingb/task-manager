@@ -17,6 +17,7 @@ import { SubscriptionServer } from 'subscriptions-transport-ws';
 import * as url from 'url';
 import { getUser } from './auth';
 import { createSchema } from './schema';
+import { createConnection } from 'typeorm';
 
 type ExpressGraphQLOptionsFunction = (req?: express.Request, res?: express.Response) => any | Promise<any>;
 
@@ -49,17 +50,18 @@ function graphiqlExpress(options: GraphiQL.GraphiQLData | ExpressGraphQLOptionsF
  * @returns Server
  */
 export default async (port: number): Promise<Server> => {
+  await createConnection();
   const app = express();
 
   const server: Server = createServer(app);
   // frontend url:
   let corsOrigin: string[] = ['http://localhost:3000'];
   if (process.env.NODE_ENV === 'develop-ci') {
-    corsOrigin = ['https://frontend-develop-dot-phoenix-development-2020.wl.r.appspot.com'];
+    corsOrigin = [''];
   } else if (process.env.NODE_ENV === 'staging') {
-    corsOrigin = ['https://frontend-staging-dot-phoenix-development-2020.wl.r.appspot.com'];
+    corsOrigin = [''];
   } else if (process.env.NODE_ENV === 'production') {
-    corsOrigin = ['https://origenes.natgas.com.mx'];
+    corsOrigin = [''];
   }
 
   app.use(
