@@ -10,7 +10,7 @@ import { ApolloServer } from 'apollo-server-express';
 import * as GraphiQL from 'apollo-server-module-graphiql';
 import * as cors from 'cors';
 import * as express from 'express';
-import { createConnection } from 'typeorm';
+
 import { execute, subscribe } from 'graphql';
 import { createServer, Server } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
@@ -49,7 +49,6 @@ function graphiqlExpress(options: GraphiQL.GraphiQLData | ExpressGraphQLOptionsF
  * @returns Server
  */
 export default async (port: number): Promise<Server> => {
-  await createConnection();
   const app = express();
 
   const server: Server = createServer(app);

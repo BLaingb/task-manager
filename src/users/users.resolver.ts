@@ -3,7 +3,7 @@ import { User } from './users.model';
 
 @Resolver()
 export class UserResolver {
-  @Query(returns => User)
+  @Query(() => User)
   public async user(@Arg('id') id: string): Promise<User> {
     const user = new User();
     user.active = true;
@@ -16,7 +16,7 @@ export class UserResolver {
     return user;
   }
 
-  @Query(returns => [User])
+  @Query(() => [User])
   public async users(): Promise<User[]> {
     const user = new User();
     user.active = true;
