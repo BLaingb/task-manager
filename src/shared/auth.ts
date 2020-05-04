@@ -1,6 +1,7 @@
-import { VerifyOptions, SignOptions } from 'jsonwebtoken';
+import { VerifyOptions, SignOptions, verify, sign } from 'jsonwebtoken';
 import { AuthChecker } from 'type-graphql';
 import { Context } from './context.interface';
+import { SessionTokens } from './outputs/session.response';
 
 export const jwtSecret = (): string => process.env.JWT_SECRET || 'secret';
 
@@ -14,8 +15,54 @@ export const jwtVerifyOptions = (): VerifyOptions => {
 export const jwtSignOptions = (): SignOptions => {
   return {
     issuer: process.env.JWT_ISSUER || 'issuer',
-    expiresIn: process.env.JWT_EXPIRATION || '1hr'
+    expiresIn: process.env.JWT_EXPIRATION || '1h'
   };
+};
+
+export const jwtRefreshVerifyOptions = (): VerifyOptions => {
+  return {
+    issuer: process.env.JWT_ISSUER || 'issuer',
+    algorithms: ['HS256']
+  };
+};
+
+export const jwtRefreshSignOptions = (): SignOptions => {
+  return {
+    issuer: process.env.JWT_ISSUER || 'issuer',
+    expiresIn: process.env.JWT_EXPIRATION || '24h'
+  };
+};
+
+export const verifyRefreshToken = async (token: string): Promise<boolean> => {
+  return new Promise<boolean>((resolve, reject) => {
+    verify(token, jwtSecret(), jwtRefreshVerifyOptions(), error => {
+      if (error) reject(error);
+
+      return resolve(true);
+    });
+  });
+};
+
+export const createTokens = (userId: string, permissions: string[]): SessionTokens => {
+  // Sign token
+  const token = sign(
+    {
+      sub: userId,
+      permissions
+    },
+    jwtSecret(),
+    jwtSignOptions()
+  );
+
+  const refreshToken = sign(
+    {
+      sub: userId,
+      permissions
+    },
+    jwtSecret(),
+    jwtRefreshSignOptions()
+  );
+  return { token, refreshToken };
 };
 
 export const authChecker: AuthChecker<Context> = ({ context: { token } }, requiredPermissions) => {

@@ -16,6 +16,7 @@ export class UserResolver {
       .getMany();
   }
 
+  // @Authorized(['user:view'])
   @Query(() => User)
   public async user(@Arg('id') id: string): Promise<User> {
     const user = await User.findOne(id, { where: { active: true } });
@@ -23,12 +24,13 @@ export class UserResolver {
     return user;
   }
 
-  @Authorized()
+  // @Authorized(['user:list'])
   @Query(() => [User])
   public async users(): Promise<User[]> {
     return User.find({ where: { active: true } });
   }
 
+  @Authorized(['user:create'])
   @Mutation(() => UserResponse)
   public async createUser(@Arg('user') userInput: UserInput): Promise<UserResponse> {
     const failureResponse: UserResponse = {

@@ -1,13 +1,10 @@
-import { UserResolver } from './users/resolvers/user.resolver';
 import { buildSchema } from 'type-graphql';
-import { RoleResolver } from './users/resolvers/role.resolver';
-import { PermissionResolver } from './users/resolvers/permission.resolver';
-import { AuthResolver } from './users/resolvers/auth.resolver';
 import { authChecker } from './shared/auth';
+import { usersResolvers } from './users/users';
 
 export const createSchema = async () => {
   const schema = await buildSchema({
-    resolvers: [UserResolver, RoleResolver, PermissionResolver, AuthResolver],
+    resolvers: [...usersResolvers],
     authChecker
   });
   return schema;
