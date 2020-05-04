@@ -1,5 +1,5 @@
 import { Arg, Mutation, Resolver } from 'type-graphql';
-import { createTokens } from '../../shared/auth';
+import { createTokens, verifyRefreshToken } from '../../shared/auth';
 import { LoginInput } from '../inputs/login.input';
 import { RefreshTokenInput } from '../inputs/refreshToken.input';
 import { User } from '../models/user.model';
@@ -46,6 +46,13 @@ export class AuthResolver {
       where: { id: refreshTokenInput.userId, active: true }
     });
     if (!user) return failureResponse;
+
+    try {
+      const verified = await verifyRefreshToken(refreshTokenInput.refreshToken);
+      if (!verified) return failureResponse;
+    } catch {
+      return failureResponse;
+    }
 
     // Get permissions from user roles
     const permissions = this.getPermissionsForUser(user);

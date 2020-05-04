@@ -4,6 +4,7 @@ import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { UserResponse } from '../outputs/user.response';
 import { UserInput } from '../inputs/user.input';
+import { UserRolesInput } from '../inputs/userRoles.input';
 
 @Resolver(of => User)
 export class UserResolver {
@@ -32,7 +33,7 @@ export class UserResolver {
 
   @Authorized(['user:create'])
   @Mutation(() => UserResponse)
-  public async createUser(@Arg('user') userInput: UserInput): Promise<UserResponse> {
+  public async createUser(@Arg('userInput') userInput: UserInput): Promise<UserResponse> {
     const failureResponse: UserResponse = {
       success: false,
       message: 'An error ocurred while creating a new user'
@@ -56,6 +57,47 @@ export class UserResolver {
     return {
       success: true,
       message: 'User created succesfully',
+      data: user
+    };
+  }
+
+  // @Authorized(['user:edit', 'roles:set'])
+  @Mutation(() => UserResponse)
+  public async setUserRoles(@Arg('userRolesInput') userRolesInput: UserRolesInput): Promise<UserResponse> {
+    const failureResponse: UserResponse = {
+      success: false,
+      message: `An error ocurred while setting ${userRolesInput.roleIds.length} roles to a user.`
+    };
+
+    if (userRolesInput.roleIds.length === 0) {
+      failureResponse.message = `${failureResponse.message} No Roles were selected.`;
+      return failureResponse;
+    }
+
+    const roles: Role[] = await Role.findByIds(userRolesInput.roleIds);
+    if (roles.length < userRolesInput.roleIds.length) {
+      failureResponse.message = `${
+        failureResponse.message
+      } One or more roles selected could not be found. No roles were set.`;
+      return failureResponse;
+    }
+
+    let user = await User.findOne(userRolesInput.userId, { where: { active: true } });
+    if (!user) {
+      failureResponse.message = `${failureResponse.message} The user could not be found.`;
+      return failureResponse;
+    }
+
+    try {
+      user.roles = roles;
+      user = await user.save();
+    } catch {
+      return failureResponse;
+    }
+
+    return {
+      success: true,
+      message: `Set ${userRolesInput.roleIds.length} roles to user successfully.`,
       data: user
     };
   }

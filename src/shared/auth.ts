@@ -29,7 +29,7 @@ export const jwtRefreshVerifyOptions = (): VerifyOptions => {
 export const jwtRefreshSignOptions = (): SignOptions => {
   return {
     issuer: process.env.JWT_ISSUER || 'issuer',
-    expiresIn: process.env.JWT_EXPIRATION || '24h'
+    expiresIn: process.env.JWT_REFRESH_EXPIRATION || '24h'
   };
 };
 
@@ -37,7 +37,6 @@ export const verifyRefreshToken = async (token: string): Promise<boolean> => {
   return new Promise<boolean>((resolve, reject) => {
     verify(token, jwtSecret(), jwtRefreshVerifyOptions(), error => {
       if (error) reject(error);
-
       return resolve(true);
     });
   });
