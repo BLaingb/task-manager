@@ -38,7 +38,7 @@ export class User extends BaseEntity {
   @Column()
   public active: boolean;
 
-  @Field(type => [Role])
+  @Field(type => [Role], { nullable: true })
   @ManyToMany(() => Role, roles => roles.users)
   @JoinTable()
   public roles: Role[];

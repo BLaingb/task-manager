@@ -6,9 +6,11 @@ import { Role } from './role.model';
 export class UserResolver {
   @FieldResolver()
   public async roles(@Root() user: User): Promise<Role[]> {
-    const roles = Role.find({ where: { users: { id: user.id } } });
-    if (!roles) throw new Error('User has no roles');
-    return roles;
+    return Role.getRepository()
+      .createQueryBuilder('role')
+      .innerJoinAndSelect('role.users', 'user')
+      .where('user.id = :id', { id: user.id })
+      .getMany();
   }
 
   @Query(() => User)

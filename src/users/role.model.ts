@@ -23,11 +23,11 @@ export class Role extends BaseEntity {
   @Column()
   public name: string;
 
-  @Field(type => [User])
+  @Field(type => [User], { nullable: true })
   @ManyToMany(() => User, user => user.roles)
   public users: User[];
 
-  @Field(type => [Permission])
+  @Field(type => [Permission], { nullable: true })
   @ManyToMany(() => Permission, permission => permission.roles)
   @JoinTable()
   public permissions: Permission[];
