@@ -6,7 +6,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToMany
+  ManyToMany,
+  JoinTable
 } from 'typeorm';
 import { Role } from './role.model';
 
@@ -37,8 +38,9 @@ export class User extends BaseEntity {
   @Column()
   public active: boolean;
 
-  @Field()
+  @Field(type => [Role])
   @ManyToMany(() => Role, roles => roles.users)
+  @JoinTable()
   public roles: Role[];
 
   @Field()

@@ -6,7 +6,8 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToMany
+  ManyToMany,
+  JoinTable
 } from 'typeorm';
 import { User } from './user.model';
 import { Permission } from './permission.model';
@@ -22,12 +23,13 @@ export class Role extends BaseEntity {
   @Column()
   public name: string;
 
-  @Field()
+  @Field(type => [User])
   @ManyToMany(() => User, user => user.roles)
   public users: User[];
 
-  @Field()
+  @Field(type => [Permission])
   @ManyToMany(() => Permission, permission => permission.roles)
+  @JoinTable()
   public permissions: Permission[];
 
   @Field()
