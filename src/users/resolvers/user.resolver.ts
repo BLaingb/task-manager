@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { Arg, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
+import { Arg, FieldResolver, Mutation, Query, Resolver, Root, Authorized } from 'type-graphql';
 import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { UserResponse } from '../outputs/user.response';
@@ -23,6 +23,7 @@ export class UserResolver {
     return user;
   }
 
+  @Authorized()
   @Query(() => [User])
   public async users(): Promise<User[]> {
     return User.find({ where: { active: true } });

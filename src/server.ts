@@ -15,9 +15,10 @@ import { execute, subscribe } from 'graphql';
 import { createServer, Server } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 import * as url from 'url';
-import { getUser } from './auth';
+import * as ejwt from 'express-jwt';
 import { createSchema } from './schema';
 import { createConnection } from 'typeorm';
+import { jwtSecret } from './shared/auth';
 
 type ExpressGraphQLOptionsFunction = (req?: express.Request, res?: express.Response) => any | Promise<any>;
 
@@ -68,6 +69,10 @@ export default async (port: number): Promise<Server> => {
     '*',
     cors({
       origin: corsOrigin
+    }),
+    ejwt({
+      secret: jwtSecret(),
+      credentialsRequired: false
     })
   );
 
@@ -76,23 +81,12 @@ export default async (port: number): Promise<Server> => {
     playground: process.env.NODE_ENV !== 'production',
     introspection: process.env.NODE_ENV !== 'production',
     schema,
-    context: async ({ req }: any) => {
-      // get the user token from the headers
-      const token = req.headers.authorization || '';
-      let user: any;
-      if (token !== '') {
-        // try to retrieve a user with the token
-        await getUser(token.substring(7, token.length))
-          .then((response: any) => {
-            user = response;
-          })
-          .catch((error: any) => {
-            throw new Error(error);
-          });
-
-        // add the user to the context
-        return { user };
-      }
+    context: ({ req }: any) => {
+      const context = {
+        req,
+        token: req.user // `req.user` comes from `express-jwt`
+      };
+      return context;
     }
   });
 

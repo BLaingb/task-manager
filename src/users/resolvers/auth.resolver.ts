@@ -1,8 +1,9 @@
-import { Resolver, Mutation, Arg } from 'type-graphql';
-import { LoginInput } from '../inputs/login.input';
-import { LoginResponse } from '../outputs/login.response';
-import { User } from '../models/user.model';
 import * as jwt from 'jsonwebtoken';
+import { Arg, Mutation, Resolver } from 'type-graphql';
+import { jwtSecret, jwtSignOptions } from '../../shared/auth';
+import { LoginInput } from '../inputs/login.input';
+import { User } from '../models/user.model';
+import { LoginResponse } from '../outputs/login.response';
 
 @Resolver()
 export class AuthResolver {
@@ -32,11 +33,8 @@ export class AuthResolver {
         sub: user.id,
         permissions
       },
-      process.env.JWT_SECRET || 'secret',
-      {
-        issuer: process.env.JWT_ISSUER,
-        expiresIn: process.env.JWT_EXPIRATION
-      }
+      jwtSecret(),
+      jwtSignOptions()
     );
 
     return {
