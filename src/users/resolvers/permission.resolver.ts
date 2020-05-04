@@ -1,6 +1,6 @@
 import { Arg, FieldResolver, Query, Resolver, Root } from 'type-graphql';
-import { Permission } from './permission.model';
-import { Role } from './role.model';
+import { Permission } from '../models/permission.model';
+import { Role } from '../models/role.model';
 
 @Resolver(of => Permission)
 export class PermissionResolver {
