@@ -11,6 +11,7 @@ import {
 } from 'typeorm';
 import { User } from './user.model';
 import { Permission } from './permission.model';
+import { MinLength } from 'class-validator';
 
 @ObjectType()
 @Entity()
@@ -21,6 +22,7 @@ export class Role extends BaseEntity {
 
   @Field()
   @Column({ unique: true })
+  @MinLength(3)
   public name: string;
 
   @Field(type => [User], { nullable: true })

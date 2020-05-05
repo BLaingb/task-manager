@@ -10,7 +10,7 @@ import {
   JoinTable
 } from 'typeorm';
 import { Role } from './role.model';
-import { Length, IsEmail } from 'class-validator';
+import { Length, IsEmail, MinLength } from 'class-validator';
 import { hashSync, compareSync } from 'bcrypt';
 
 @ObjectType()
@@ -31,6 +31,7 @@ export class User extends BaseEntity {
 
   @Field()
   @Column()
+  @MinLength(3)
   public firstName: string;
 
   @Field({ nullable: true })

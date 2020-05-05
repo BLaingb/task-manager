@@ -44,6 +44,10 @@ export class RoleResolver {
       success: false,
       message: 'An error ocurred while creating a new role.'
     };
+    const successResponse: RoleResponse = {
+      success: true,
+      message: 'Role created succesfully.'
+    };
     let role = Role.create({ name: roleInput.name });
 
     const errors = await validate(role);
@@ -57,6 +61,13 @@ export class RoleResolver {
     } catch {
       failureResponse.message = `A role with name ${role.name} already exists.`;
       return failureResponse;
+    }
+
+    if (!roleInput.permissionIds) {
+      return {
+        ...successResponse,
+        data: role
+      };
     }
 
     const permissions: Permission[] = await Permission.findByIds(roleInput.permissionIds);
@@ -76,8 +87,7 @@ export class RoleResolver {
     }
 
     return {
-      success: true,
-      message: 'Role created succesfully',
+      ...successResponse,
       data: role
     };
   }
