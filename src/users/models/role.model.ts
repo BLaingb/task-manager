@@ -20,7 +20,7 @@ export class Role extends BaseEntity {
   public id: string;
 
   @Field()
-  @Column()
+  @Column({ unique: true })
   public name: string;
 
   @Field(type => [User], { nullable: true })

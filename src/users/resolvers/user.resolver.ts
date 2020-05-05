@@ -21,7 +21,7 @@ export class UserResolver {
   @Query(() => User)
   public async user(@Arg('id') id: string): Promise<User> {
     const user = await User.findOne(id, { where: { active: true } });
-    if (!user) throw new Error('User not found');
+    if (!user) throw new Error('User not found.');
     return user;
   }
 
@@ -36,7 +36,7 @@ export class UserResolver {
   public async createUser(@Arg('userInput') userInput: UserInput): Promise<UserResponse> {
     const failureResponse: UserResponse = {
       success: false,
-      message: 'An error ocurred while creating a new user'
+      message: 'An error ocurred while creating a new user.'
     };
     let user = User.create(userInput);
 
@@ -50,13 +50,13 @@ export class UserResolver {
     try {
       user = await user.save();
     } catch {
-      failureResponse.message = `A user with email ${user.email} already exists`;
+      failureResponse.message = `A user with email ${user.email} already exists.`;
       return failureResponse;
     }
 
     return {
       success: true,
-      message: 'User created succesfully',
+      message: 'User created succesfully.',
       data: user
     };
   }

@@ -1,7 +1,10 @@
-import { Resolver, FieldResolver, Root, Query, Arg } from 'type-graphql';
+import { Resolver, FieldResolver, Root, Query, Arg, Mutation } from 'type-graphql';
 import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { Permission } from '../models/permission.model';
+import { RoleResponse } from '../outputs/role.response';
+import { RoleInput } from '../inputs/role.input';
+import { validate } from 'class-validator';
 
 @Resolver(of => Role)
 export class RoleResolver {
@@ -31,7 +34,51 @@ export class RoleResolver {
   @Query(() => Role)
   public async role(@Arg('id') id: string): Promise<Role> {
     const role = await Role.findOne(id);
-    if (!role) throw new Error(`Role with id: ${id} does not exist`);
+    if (!role) throw new Error(`Role with id: ${id} does not exist.`);
     return role;
+  }
+
+  @Mutation(() => RoleResponse)
+  public async createRole(@Arg('roleInput') roleInput: RoleInput): Promise<RoleResponse> {
+    const failureResponse: RoleResponse = {
+      success: false,
+      message: 'An error ocurred while creating a new role.'
+    };
+    let role = Role.create({ name: roleInput.name });
+
+    const errors = await validate(role);
+    if (errors.length > 0) {
+      failureResponse.errors = errors.map(e => e.toString());
+      return failureResponse;
+    }
+
+    try {
+      role = await role.save();
+    } catch {
+      failureResponse.message = `A role with name ${role.name} already exists.`;
+      return failureResponse;
+    }
+
+    const permissions: Permission[] = await Permission.findByIds(roleInput.permissionIds);
+    if (permissions.length < roleInput.permissionIds.length) {
+      failureResponse.message = `${
+        failureResponse.message
+      } One or more permissions selected could not be found. No permissions were set to the new role.`;
+      return failureResponse;
+    }
+
+    try {
+      role.permissions = permissions;
+      role = await role.save();
+    } catch {
+      failureResponse.message = `${failureResponse.message} No permissions were set to the new role.`;
+      return failureResponse;
+    }
+
+    return {
+      success: true,
+      message: 'Role created succesfully',
+      data: role
+    };
   }
 }
