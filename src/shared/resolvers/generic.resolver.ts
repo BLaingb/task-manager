@@ -3,11 +3,17 @@ import { validate } from 'class-validator';
 export abstract class GenericResolver {
   protected abstract className: string;
 
-  protected async dbOperation(operation: () => any, action: string) {
+  protected async dbOperation<T = any>(databaseFn: () => Promise<T>): Promise<{ success: boolean; object?: T }> {
     try {
-      return await operation();
+      const object = await databaseFn();
+      return {
+        success: true,
+        object
+      };
     } catch {
-      throw new Error(`Hubo un problema al realizar [${action}] de [${this.className}] en la base de datos.`);
+      return {
+        success: false
+      };
     }
   }
 

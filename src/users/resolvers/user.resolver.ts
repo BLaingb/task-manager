@@ -48,12 +48,13 @@ export class UserResolver extends GenericResolver {
     }
 
     user.password = User.hashPassword(user.password);
-    try {
-      user = await user.save();
-    } catch {
+
+    const result = await this.dbOperation(user.save);
+    if (!result.success || !result.object) {
       failureResponse.message = `A user with email ${user.email} already exists.`;
       return failureResponse;
     }
+    user = result.object;
 
     return {
       success: true,
@@ -89,12 +90,10 @@ export class UserResolver extends GenericResolver {
       return failureResponse;
     }
 
-    try {
-      user.roles = roles;
-      user = await user.save();
-    } catch {
-      return failureResponse;
-    }
+    user.roles = roles;
+    const result = await this.dbOperation(user.save);
+    if (!result.success || !result.object) return failureResponse;
+    user = result.object;
 
     return {
       success: true,

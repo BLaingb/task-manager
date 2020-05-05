@@ -57,12 +57,13 @@ export class RoleResolver extends GenericResolver {
       return failureResponse;
     }
 
-    try {
-      role = await role.save();
-    } catch {
+    let result = await this.dbOperation(role.save);
+    if (!result.success || !result.object) {
       failureResponse.message = `A role with name ${role.name} already exists.`;
       return failureResponse;
     }
+
+    role = result.object;
 
     if (!roleInput.permissionIds) {
       return {
@@ -79,13 +80,14 @@ export class RoleResolver extends GenericResolver {
       return failureResponse;
     }
 
-    try {
-      role.permissions = permissions;
-      role = await role.save();
-    } catch {
+    role.permissions = permissions;
+    result = await this.dbOperation(role.save);
+    if (!result.success || !result.object) {
       failureResponse.message = `${failureResponse.message} No permissions were set to the new role.`;
       return failureResponse;
     }
+
+    role = result.object;
 
     return {
       ...successResponse,
