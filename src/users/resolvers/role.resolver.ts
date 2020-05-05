@@ -91,4 +91,70 @@ export class RoleResolver {
       data: role
     };
   }
+
+  @Mutation(() => RoleResponse)
+  public async updateRole(@Arg('roleInput') roleInput: RoleInput): Promise<RoleResponse> {
+    const failureResponse: RoleResponse = {
+      success: false,
+      message: 'An error ocurred while updating a role.'
+    };
+    const successResponse: RoleResponse = {
+      success: true,
+      message: 'Role updated succesfully.'
+    };
+
+    if (!roleInput.id) {
+      failureResponse.message = `${failureResponse.message} A role id was not provided.`;
+      return failureResponse;
+    }
+
+    let role = await Role.findOne(roleInput.id);
+    if (!role) {
+      failureResponse.message = `${failureResponse.message} The role to update does not exist.`;
+      return failureResponse;
+    }
+
+    role.name = roleInput.name || role.name;
+
+    const errors = await validate(role);
+    if (errors.length > 0) {
+      failureResponse.errors = errors.map(e => e.toString());
+      return failureResponse;
+    }
+
+    try {
+      role = await role.save();
+    } catch {
+      failureResponse.message = `A role with name ${role.name} already exists.`;
+      return failureResponse;
+    }
+
+    if (!roleInput.permissionIds) {
+      return {
+        ...successResponse,
+        data: role
+      };
+    }
+
+    const permissions: Permission[] = await Permission.findByIds(roleInput.permissionIds);
+    if (permissions.length < roleInput.permissionIds.length) {
+      failureResponse.message = `${
+        failureResponse.message
+      } One or more permissions selected could not be found. No permissions were set to the updated role.`;
+      return failureResponse;
+    }
+
+    try {
+      role.permissions = permissions;
+      role = await role.save();
+    } catch {
+      failureResponse.message = `${failureResponse.message} No permissions were set to the updated role.`;
+      return failureResponse;
+    }
+
+    return {
+      ...successResponse,
+      data: role
+    };
+  }
 }
