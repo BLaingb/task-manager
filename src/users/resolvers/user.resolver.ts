@@ -1,13 +1,14 @@
-import { validate } from 'class-validator';
-import { Arg, FieldResolver, Mutation, Query, Resolver, Root, Authorized } from 'type-graphql';
+import { Arg, Authorized, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
+import { GenericResolver } from '../../shared/resolvers/generic.resolver';
+import { UserInput } from '../inputs/user.input';
+import { UserRolesInput } from '../inputs/userRoles.input';
 import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { UserResponse } from '../outputs/user.response';
-import { UserInput } from '../inputs/user.input';
-import { UserRolesInput } from '../inputs/userRoles.input';
 
 @Resolver(of => User)
-export class UserResolver {
+export class UserResolver extends GenericResolver {
+  protected className = 'User';
   @FieldResolver()
   public async roles(@Root() user: User): Promise<Role[]> {
     return Role.getRepository()
@@ -40,9 +41,9 @@ export class UserResolver {
     };
     let user = User.create(userInput);
 
-    const errors = await validate(user);
-    if (errors.length > 0) {
-      failureResponse.errors = errors.map(e => e.toString());
+    const errors = await this.validationErrors(user);
+    if (errors) {
+      failureResponse.errors = errors;
       return failureResponse;
     }
 

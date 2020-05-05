@@ -1,13 +1,14 @@
-import { Resolver, FieldResolver, Root, Query, Arg, Mutation } from 'type-graphql';
+import { Arg, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
+import { GenericResolver } from '../../shared/resolvers/generic.resolver';
+import { RoleInput } from '../inputs/role.input';
+import { Permission } from '../models/permission.model';
 import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
-import { Permission } from '../models/permission.model';
 import { RoleResponse } from '../outputs/role.response';
-import { RoleInput } from '../inputs/role.input';
-import { validate } from 'class-validator';
 
 @Resolver(of => Role)
-export class RoleResolver {
+export class RoleResolver extends GenericResolver {
+  protected className = 'Role';
   @FieldResolver()
   public async users(@Root() role: Role): Promise<User[]> {
     return User.getRepository()
@@ -50,9 +51,9 @@ export class RoleResolver {
     };
     let role = Role.create({ name: roleInput.name });
 
-    const errors = await validate(role);
-    if (errors.length > 0) {
-      failureResponse.errors = errors.map(e => e.toString());
+    const errors = await this.validationErrors(role);
+    if (errors) {
+      failureResponse.errors = errors;
       return failureResponse;
     }
 
@@ -116,9 +117,9 @@ export class RoleResolver {
 
     role.name = roleInput.name || role.name;
 
-    const errors = await validate(role);
-    if (errors.length > 0) {
-      failureResponse.errors = errors.map(e => e.toString());
+    const errors = await this.validationErrors(role);
+    if (errors) {
+      failureResponse.errors = errors;
       return failureResponse;
     }
 
