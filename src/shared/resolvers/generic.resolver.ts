@@ -1,5 +1,5 @@
 import { validate } from 'class-validator';
-import { EntityManager, TransactionManager, Transaction, BaseEntity, getManager } from 'typeorm';
+import { BaseEntity, EntityManager, getManager } from 'typeorm';
 
 export abstract class GenericResolver {
   protected abstract className: string;
