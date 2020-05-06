@@ -24,17 +24,27 @@ export abstract class GenericResolver {
     return;
   }
 
-  protected async save(entities: BaseEntity[]): Promise<BaseEntity[] | undefined> {
+  protected async saveMany(entities: BaseEntity[]): Promise<BaseEntity[] | undefined> {
     const savedEntities: BaseEntity[] = [];
-    for (const entity of entities) {
-      try {
-        const saved = await getManager().save(entity);
-        if (!saved) return;
-        savedEntities.push(saved);
-      } catch {
-        return;
+    const success = await this.executeInTransaction(async t => {
+      for (const entity of entities) {
+        try {
+          const saved = await t.save(entity);
+          if (!saved) return false;
+          savedEntities.push(saved);
+        } catch {
+          return false;
+        }
       }
-    }
+      return true;
+    });
+    if (!success) return;
     return savedEntities;
+  }
+
+  protected async executeInTransaction(fn: (t: EntityManager) => Promise<boolean>): Promise<boolean> {
+    return getManager().transaction(async transactionalManager => {
+      return fn(transactionalManager);
+    });
   }
 }
