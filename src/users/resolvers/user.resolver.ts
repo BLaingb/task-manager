@@ -18,7 +18,7 @@ export class UserResolver extends GenericResolver {
       .getMany();
   }
 
-  // @Authorized(['user:view'])
+  @Authorized(['user:view'])
   @Query(() => User)
   public async user(@Arg('id') id: string): Promise<User> {
     const user = await User.findOne(id, { where: { active: true } });
@@ -26,7 +26,7 @@ export class UserResolver extends GenericResolver {
     return user;
   }
 
-  // @Authorized(['user:list'])
+  @Authorized(['user:list'])
   @Query(() => [User])
   public async users(): Promise<User[]> {
     return User.find({ where: { active: true } });
@@ -63,7 +63,7 @@ export class UserResolver extends GenericResolver {
     };
   }
 
-  // @Authorized(['user:edit', 'roles:set'])
+  @Authorized(['user:edit', 'roles:set'])
   @Mutation(() => UserResponse)
   public async setUserRoles(@Arg('userRolesInput') userRolesInput: UserRolesInput): Promise<UserResponse> {
     const failureResponse: UserResponse = {

@@ -1,4 +1,5 @@
 import { validate } from 'class-validator';
+import { EntityManager, TransactionManager, Transaction, BaseEntity, getManager } from 'typeorm';
 
 export abstract class GenericResolver {
   protected abstract className: string;
@@ -21,5 +22,19 @@ export abstract class GenericResolver {
     const errors = await validate(toValidate);
     if (errors.length > 0) return errors.map(e => e.toString());
     return;
+  }
+
+  protected async save(entities: BaseEntity[]): Promise<BaseEntity[] | undefined> {
+    const savedEntities: BaseEntity[] = [];
+    for (const entity of entities) {
+      try {
+        const saved = await getManager().save(entity);
+        if (!saved) return;
+        savedEntities.push(saved);
+      } catch {
+        return;
+      }
+    }
+    return savedEntities;
   }
 }
