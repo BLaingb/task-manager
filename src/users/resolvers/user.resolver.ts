@@ -1,4 +1,5 @@
 import { Arg, Authorized, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
+import { getRepository } from 'typeorm';
 import { GenericResolver } from '../../shared/resolvers/generic.resolver';
 import { UserInput } from '../inputs/user.input';
 import { UserRolesInput } from '../inputs/userRoles.input';
@@ -7,8 +8,10 @@ import { User } from '../models/user.model';
 import { UserResponse } from '../outputs/user.response';
 
 @Resolver(of => User)
-export class UserResolver extends GenericResolver {
+export class UserResolver extends GenericResolver<User> {
   protected className = 'User';
+  protected repository = getRepository(User);
+
   @FieldResolver()
   public async roles(@Root() user: User): Promise<Role[]> {
     return Role.getRepository()
@@ -35,32 +38,12 @@ export class UserResolver extends GenericResolver {
   @Authorized(['user:create'])
   @Mutation(() => UserResponse)
   public async createUser(@Arg('userInput') userInput: UserInput): Promise<UserResponse> {
-    const failureResponse: UserResponse = {
-      success: false,
-      message: 'An error ocurred while creating a new user.'
-    };
-    let user = User.create(userInput);
-
-    const errors = await this.validationErrors(user);
-    if (errors) {
-      failureResponse.errors = errors;
-      return failureResponse;
-    }
-
-    user.password = User.hashPassword(user.password);
-
-    const result = await this.dbOperation(user.save);
-    if (!result.success || !result.object) {
-      failureResponse.message = `A user with email ${user.email} already exists.`;
-      return failureResponse;
-    }
-    user = result.object;
-
-    return {
-      success: true,
-      message: 'User created succesfully.',
-      data: user
-    };
+    return this.createOne(getRepository('user'), userInput, {
+      preSaveFn: user => {
+        user.password = User.hashPassword(user.password);
+        return user;
+      }
+    });
   }
 
   @Authorized(['user:edit', 'roles:set'])
@@ -98,6 +81,53 @@ export class UserResolver extends GenericResolver {
     return {
       success: true,
       message: `Set ${userRolesInput.roleIds.length} roles to user successfully.`,
+      data: user
+    };
+  }
+
+  @Authorized(['user:update'])
+  @Mutation(() => UserResponse)
+  public async updateUser(@Arg('userInput') userInput: UserInput): Promise<UserResponse> {
+    const failureResponse: UserResponse = {
+      success: false,
+      message: 'An error ocurred while updating a user.'
+    };
+
+    if (!userInput.id)
+      return {
+        ...failureResponse,
+        message: `${failureResponse.message} A user id was not provided.`
+      };
+
+    let user = await User.findOne(userInput.id);
+    if (!user)
+      return {
+        ...failureResponse,
+        message: `${failureResponse.message} The user to update does not exist.`
+      };
+
+    user.email = userInput.email;
+    user.firstName = userInput.email;
+    user.lastName = userInput.lastName;
+    user.profilePicture = userInput.lastName;
+
+    const errors = await this.validationErrors(user);
+    if (errors)
+      return {
+        ...failureResponse,
+        errors
+      };
+
+    const result = await this.dbOperation(user.save);
+    if (!result.success || !result.object) {
+      failureResponse.message = `A user with email ${user.email} already exists.`;
+      return failureResponse;
+    }
+    user = result.object;
+
+    return {
+      success: true,
+      message: 'User updated succesfully.',
       data: user
     };
   }

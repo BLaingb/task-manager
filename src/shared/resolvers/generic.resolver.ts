@@ -1,8 +1,9 @@
 import { validate } from 'class-validator';
-import { BaseEntity, EntityManager, getManager } from 'typeorm';
+import { BaseEntity, DeepPartial, EntityManager, getManager, Repository } from 'typeorm';
 
-export abstract class GenericResolver {
-  protected abstract className: string;
+export abstract class GenericResolver<Model extends BaseEntity> {
+  protected abstract readonly className: string;
+  protected abstract readonly repository: Repository<Model>;
 
   protected async dbOperation<T = any>(databaseFn: () => Promise<T>): Promise<{ success: boolean; object?: T }> {
     try {
@@ -11,7 +12,8 @@ export abstract class GenericResolver {
         success: true,
         object
       };
-    } catch {
+    } catch (error) {
+      console.error(error);
       return {
         success: false
       };
@@ -46,5 +48,48 @@ export abstract class GenericResolver {
     return getManager().transaction(async transactionalManager => {
       return fn(transactionalManager);
     });
+  }
+
+  protected async createOne(
+    repository: Repository<Model>,
+    input: DeepPartial<Model>,
+    options?: {
+      preValidationFn?: (object: Model) => Model;
+      preSaveFn?: (object: Model) => Model;
+    }
+  ): Promise<{ success: boolean; message?: string; data?: Model; errors?: string[] }> {
+    const failureResponse = {
+      success: false,
+      message: `An error ocurred while creating a new [${this.className}].`
+    };
+
+    let model = this.repository.create({
+      ...input,
+      id: undefined
+    });
+
+    if (options && options.preValidationFn) model = options.preValidationFn(model);
+
+    const errors = await this.validationErrors(model);
+    if (errors)
+      return {
+        ...failureResponse,
+        errors
+      };
+
+    if (options && options.preSaveFn) model = options.preSaveFn(model);
+
+    try {
+      model = await model.save();
+    } catch (error) {
+      console.error('Error 2: ', error);
+      return failureResponse;
+    }
+
+    return {
+      success: true,
+      message: `[${this.className}] created succesfully.`,
+      data: model
+    };
   }
 }

@@ -7,8 +7,9 @@ import { User } from '../models/user.model';
 import { RoleResponse } from '../outputs/role.response';
 
 @Resolver(of => Role)
-export class RoleResolver extends GenericResolver {
+export class RoleResolver extends GenericResolver<Role> {
   protected className = 'Role';
+  protected repository = Role.getRepository();
 
   @FieldResolver()
   public async users(@Root() role: Role): Promise<User[]> {
