@@ -73,7 +73,15 @@ export default async (port: number): Promise<Server> => {
     ejwt({
       secret: jwtSecret(),
       credentialsRequired: false
-    })
+    }),
+    (err: any, _: any, res: any, next: any) => {
+      // Handle UnauthorizedError for expired or invalid tokens
+      if (err.name === 'UnauthorizedError') {
+        res.status(err.status).send({ message: 'There was a problem with your session. Please log in again.' });
+        return;
+      }
+      next();
+    }
   );
 
   const schema = await createSchema();
