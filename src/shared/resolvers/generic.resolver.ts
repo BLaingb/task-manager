@@ -12,8 +12,7 @@ export abstract class GenericResolver<Model extends BaseEntity> {
         success: true,
         object
       };
-    } catch (error) {
-      console.error(error);
+    } catch {
       return {
         success: false
       };
@@ -51,12 +50,12 @@ export abstract class GenericResolver<Model extends BaseEntity> {
   }
 
   protected async createOne(
-    repository: Repository<Model>,
     input: DeepPartial<Model>,
-    options?: {
-      preValidationFn?: (object: Model) => Model;
-      preSaveFn?: (object: Model) => Model;
-    }
+    options: {
+      preValidationFn?: (object: Model) => Model | Promise<Model>;
+      preSaveFn?: (object: Model) => Model | Promise<Model>;
+      postSaveFn?: (object: Model) => Model | Promise<Model>;
+    } = {}
   ): Promise<{ success: boolean; message?: string; data?: Model; errors?: string[] }> {
     const failureResponse = {
       success: false,
@@ -68,7 +67,7 @@ export abstract class GenericResolver<Model extends BaseEntity> {
       id: undefined
     });
 
-    if (options && options.preValidationFn) model = options.preValidationFn(model);
+    if (options.preValidationFn) model = await options.preValidationFn(model);
 
     const errors = await this.validationErrors(model);
     if (errors)
@@ -77,14 +76,18 @@ export abstract class GenericResolver<Model extends BaseEntity> {
         errors
       };
 
-    if (options && options.preSaveFn) model = options.preSaveFn(model);
+    if (options.preSaveFn) model = await options.preSaveFn(model);
 
     try {
       model = await model.save();
     } catch (error) {
-      console.error('Error 2: ', error);
-      return failureResponse;
+      return {
+        ...failureResponse,
+        errors: [`Error ${error.code}: [${error.name}] ${error.message}`]
+      };
     }
+
+    if (options.postSaveFn) model = await options.postSaveFn(model);
 
     return {
       success: true,
