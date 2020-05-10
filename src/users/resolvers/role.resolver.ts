@@ -52,17 +52,6 @@ export class RoleResolver extends GenericResolver<Role> {
         relations: [{ key: 'permissions', ids: roleInput.permissionIds || [], tableName: 'permission' }]
       }
     );
-    // const failureResponse: RoleResponse = {
-    //   success: false,
-    //   message: 'An error ocurred while creating a new role.'
-    // };
-    // const successResponse: RoleResponse = {
-    //   success: true,
-    //   message: 'Role created succesfully.'
-    // };
-    // const role = Role.create({ name: roleInput.name });
-
-    // return this.saveRole(role, roleInput, successResponse, failureResponse);
   }
 
   @Authorized(['roles:update'])

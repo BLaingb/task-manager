@@ -1,5 +1,5 @@
 import { ObjectType } from 'type-graphql';
-import mutationResponse from '../../shared/outputs/generic.response';
+import mutationResponse from '../../shared/outputs/mutation.response';
 import { SessionTokens } from '../../shared/outputs/session.response';
 
 @ObjectType()

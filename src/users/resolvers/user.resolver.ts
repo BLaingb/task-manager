@@ -1,11 +1,13 @@
 import { Arg, Authorized, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
 import { getRepository } from 'typeorm';
+import { PaginationInput } from '../../shared/inputs/pagination.input';
 import { GenericResolver } from '../../shared/resolvers/generic.resolver';
 import { UserInput } from '../inputs/user.input';
 import { UserRolesInput } from '../inputs/userRoles.input';
 import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { UserResponse } from '../outputs/user.response';
+import { UserPagination } from '../outputs/userPagination.response';
 
 // TODO: Add mutation for self register, with email verification.
 
@@ -32,9 +34,9 @@ export class UserResolver extends GenericResolver<User> {
   }
 
   @Authorized(['user:list'])
-  @Query(() => [User])
-  public async users(): Promise<User[]> {
-    return User.find({ where: { active: true } });
+  @Query(() => UserPagination)
+  public async users(@Arg('paginationInput') paginationInput: PaginationInput): Promise<UserPagination> {
+    return this.findPaginated(paginationInput);
   }
 
   @Authorized(['user:create'])

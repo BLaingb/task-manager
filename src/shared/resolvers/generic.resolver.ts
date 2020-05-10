@@ -2,6 +2,7 @@ import { validate } from 'class-validator';
 import { BaseEntity, DeepPartial, EntityManager, getManager, Repository } from 'typeorm';
 import { OperationOptions } from '../operationOptions.interface';
 import { OperationResult } from '../operationResult.interface';
+import { PaginationInput } from '../inputs/pagination.input';
 
 export abstract class GenericResolver<Model extends BaseEntity> {
   protected abstract readonly className: string;
@@ -147,5 +148,19 @@ export abstract class GenericResolver<Model extends BaseEntity> {
     });
     if (!success) return { errors };
     return { object };
+  }
+
+  protected async findPaginated(
+    input: PaginationInput
+  ): Promise<{ page: number; pageSize: number; total: number; items: Model[] }> {
+    await validate(input);
+    const skip = (input.page - 1) * input.take;
+    const [items, total] = await this.repository.findAndCount({ skip, take: input.take });
+    return {
+      pageSize: input.take,
+      page: input.page,
+      total,
+      items
+    };
   }
 }
