@@ -46,17 +46,23 @@ export class RoleResolver extends GenericResolver<Role> {
   @Authorized(['roles:create'])
   @Mutation(() => RoleResponse)
   public async createRole(@Arg('roleInput') roleInput: RoleInput): Promise<RoleResponse> {
-    const failureResponse: RoleResponse = {
-      success: false,
-      message: 'An error ocurred while creating a new role.'
-    };
-    const successResponse: RoleResponse = {
-      success: true,
-      message: 'Role created succesfully.'
-    };
-    const role = Role.create({ name: roleInput.name });
+    return this.createOne(
+      { ...roleInput, permissions: undefined },
+      {
+        relations: [{ key: 'permissions', ids: roleInput.permissionIds || [], tableName: 'permission' }]
+      }
+    );
+    // const failureResponse: RoleResponse = {
+    //   success: false,
+    //   message: 'An error ocurred while creating a new role.'
+    // };
+    // const successResponse: RoleResponse = {
+    //   success: true,
+    //   message: 'Role created succesfully.'
+    // };
+    // const role = Role.create({ name: roleInput.name });
 
-    return this.saveRole(role, roleInput, successResponse, failureResponse);
+    // return this.saveRole(role, roleInput, successResponse, failureResponse);
   }
 
   @Authorized(['roles:update'])

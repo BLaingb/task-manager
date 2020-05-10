@@ -1,5 +1,7 @@
 import { validate } from 'class-validator';
 import { BaseEntity, DeepPartial, EntityManager, getManager, Repository } from 'typeorm';
+import { OperationOptions } from '../operationOptions.interface';
+import { OperationResult } from '../operationResult.interface';
 
 export abstract class GenericResolver<Model extends BaseEntity> {
   protected abstract readonly className: string;
@@ -51,11 +53,7 @@ export abstract class GenericResolver<Model extends BaseEntity> {
 
   protected async createOne(
     input: DeepPartial<Model>,
-    options: {
-      preValidationFn?: (object: Model) => Model | Promise<Model>;
-      preSaveFn?: (object: Model) => Model | Promise<Model>;
-      postSaveFn?: (object: Model) => Model | Promise<Model>;
-    } = {}
+    options: OperationOptions<Model> = {}
   ): Promise<{ success: boolean; message?: string; data?: Model; errors?: string[] }> {
     const failureResponse = {
       success: false,
@@ -78,13 +76,23 @@ export abstract class GenericResolver<Model extends BaseEntity> {
 
     if (options.preSaveFn) model = await options.preSaveFn(model);
 
-    try {
-      model = await model.save();
-    } catch (error) {
+    const response = await this.save(model);
+    if (response.errors)
       return {
         ...failureResponse,
-        errors: [`Error ${error.code}: [${error.name}] ${error.message}`]
+        errors: response.errors
       };
+    if (response.object) model = response.object;
+
+    if (options.relations) {
+      const saveRelationsResult = await this.saveRelations(model, options.relations);
+      if (saveRelationsResult.errors)
+        return {
+          ...failureResponse,
+          errors: saveRelationsResult.errors
+        };
+
+      if (saveRelationsResult.object) model = saveRelationsResult.object;
     }
 
     if (options.postSaveFn) model = await options.postSaveFn(model);
@@ -94,5 +102,50 @@ export abstract class GenericResolver<Model extends BaseEntity> {
       message: `[${this.className}] created succesfully.`,
       data: model
     };
+  }
+
+  protected async save<T extends BaseEntity = Model>(object: T): Promise<OperationResult<T>> {
+    try {
+      const saved = await object.save();
+      return { object: saved };
+    } catch (error) {
+      return {
+        errors: [`Error ${error.code}: [${error.name}] ${error.message}`]
+      };
+    }
+  }
+
+  protected async saveRelations<T extends BaseEntity = Model>(
+    object: T,
+    relations: Array<{ key: string; ids: string[]; tableName: string }>
+  ): Promise<OperationResult<T>> {
+    const errors: string[] = [];
+    // Save relations in transaction
+    const success = await this.executeInTransaction(async t => {
+      for (const rel of relations) {
+        // Get objects in relationship.
+        // Using try catch block in case tableName is not an actual table,
+        // and getting the repository fails. Need to look for a better
+        // way to pass the Entity, maybe if I could get a way to pass the class?
+        try {
+          const relationshipObjects = await t.getRepository(rel.tableName).findByIds(rel.ids);
+          object[rel.key] = relationshipObjects;
+        } catch (error) {
+          errors.push(error.message);
+          return false;
+        }
+
+        // Save the object, after relations have been added.
+        const response = await this.save(object);
+        if (response.errors) {
+          errors.push(...errors);
+          return false;
+        }
+        if (response.object) object = response.object;
+      }
+      return true;
+    });
+    if (!success) return { errors };
+    return { object };
   }
 }

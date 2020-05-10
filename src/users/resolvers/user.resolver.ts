@@ -7,6 +7,8 @@ import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { UserResponse } from '../outputs/user.response';
 
+// TODO: Add mutation for self register, with email verification.
+
 @Resolver(of => User)
 export class UserResolver extends GenericResolver<User> {
   protected className = 'User';
@@ -38,7 +40,7 @@ export class UserResolver extends GenericResolver<User> {
   @Authorized(['user:create'])
   @Mutation(() => UserResponse)
   public async createUser(@Arg('userInput') userInput: UserInput): Promise<UserResponse> {
-    return this.createOne(getRepository('user'), userInput, {
+    return this.createOne(userInput, {
       preSaveFn: user => {
         user.password = User.hashPassword(user.password);
         return user;
