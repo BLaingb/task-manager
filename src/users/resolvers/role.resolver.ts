@@ -5,6 +5,8 @@ import { Permission } from '../models/permission.model';
 import { Role } from '../models/role.model';
 import { User } from '../models/user.model';
 import { RoleResponse } from '../outputs/role.response';
+import { RolePagination } from '../outputs/rolePagination.response';
+import { PaginationInput } from '../../shared/inputs/pagination.input';
 
 @Resolver(of => Role)
 export class RoleResolver extends GenericResolver<Role> {
@@ -30,9 +32,9 @@ export class RoleResolver extends GenericResolver<Role> {
   }
 
   @Authorized(['roles:list'])
-  @Query(() => [Role])
-  public async roles(): Promise<Role[]> {
-    return Role.find();
+  @Query(() => RolePagination)
+  public async roles(@Arg('paginationInput') paginationInput: PaginationInput): Promise<RolePagination> {
+    return this.findPaginated(paginationInput);
   }
 
   @Authorized(['roles:view'])
