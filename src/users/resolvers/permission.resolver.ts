@@ -23,10 +23,10 @@ export class PermissionResolver extends GenericResolver<Permission> {
     return this.findPaginated(paginationInput);
   }
 
-  @Query(() => Permission)
-  public async permission(@Arg('id') id: string): Promise<Permission> {
+  @Query(() => Permission, { nullable: true })
+  public async permission(@Arg('id') id: string): Promise<Permission | undefined> {
     const permission = await Permission.findOne(id);
-    if (!permission) throw new Error(`Permission with id: ${id} does not exist`);
+    // if (!permission) throw new Error(`Permission with id: ${id} does not exist`);
     return permission;
   }
 }
