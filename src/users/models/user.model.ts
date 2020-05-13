@@ -46,6 +46,10 @@ export class User extends BaseEntity {
   @Column({ default: true })
   public active: boolean;
 
+  @Field()
+  @Column({ default: false })
+  public verified: boolean;
+
   @Field(type => [Role], { nullable: true })
   @ManyToMany(() => Role, roles => roles.users)
   @JoinTable()
