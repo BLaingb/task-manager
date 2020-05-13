@@ -1,17 +1,17 @@
-import { ObjectType, Field, ID } from 'type-graphql';
+import { compareSync, hashSync } from 'bcrypt';
+import { IsEmail, MinLength } from 'class-validator';
+import { Field, ID, ObjectType } from 'type-graphql';
 import {
-  Entity,
   BaseEntity,
-  PrimaryGeneratedColumn,
   Column,
   CreateDateColumn,
-  UpdateDateColumn,
+  Entity,
+  JoinTable,
   ManyToMany,
-  JoinTable
+  PrimaryGeneratedColumn,
+  UpdateDateColumn
 } from 'typeorm';
 import { Role } from './role.model';
-import { Length, IsEmail, MinLength } from 'class-validator';
-import { hashSync, compareSync } from 'bcrypt';
 
 @ObjectType()
 @Entity()
@@ -26,7 +26,6 @@ export class User extends BaseEntity {
   public email: string;
 
   @Column({ select: false })
-  @Length(8, 100)
   public password: string;
 
   @Field()

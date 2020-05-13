@@ -3,6 +3,34 @@
 # !!!   DO NOT MODIFY THIS FILE BY YOURSELF   !!!
 # -----------------------------------------------
 
+type Client {
+  id: ID!
+  companyRole: String!
+  user: User!
+  active: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+input ClientInput {
+  companyRole: String!
+  userId: String!
+}
+
+type ClientPagination {
+  pageSize: Int!
+  page: Int!
+  total: Int!
+  items: [Client!]!
+}
+
+type ClientResponse {
+  success: Boolean!
+  message: String
+  errors: [String!]
+  data: Client
+}
+
 """
 The javascript `Date` as string. Type represents date and time as the ISO Date string.
 """
@@ -28,6 +56,7 @@ type Mutation {
   updateRole(roleInput: RoleInput!): RoleResponse!
   login(loginInput: LoginInput!): LoginResponse!
   refreshSession(refreshTokenInput: RefreshTokenInput!): LoginResponse!
+  createClient(clientInput: ClientInput!): ClientResponse!
 }
 
 input PaginationInput {
@@ -57,6 +86,8 @@ type Query {
   role(id: String!): Role!
   permissions(paginationInput: PaginationInput!): PermissionPagination!
   permission(id: String!): Permission
+  clients(paginationInput: PaginationInput!): ClientPagination!
+  client(id: String!): Client
 }
 
 input RefreshTokenInput {

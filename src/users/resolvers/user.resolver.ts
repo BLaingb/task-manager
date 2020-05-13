@@ -53,40 +53,9 @@ export class UserResolver extends GenericResolver<User> {
   @Authorized(['user:edit', 'roles:set'])
   @Mutation(() => UserResponse)
   public async setUserRoles(@Arg('userRolesInput') userRolesInput: UserRolesInput): Promise<UserResponse> {
-    const failureResponse: UserResponse = {
-      success: false,
-      message: `An error ocurred while setting ${userRolesInput.roleIds.length} roles to a user.`
-    };
-
-    if (userRolesInput.roleIds.length === 0) {
-      failureResponse.message = `${failureResponse.message} No Roles were selected.`;
-      return failureResponse;
-    }
-
-    const roles: Role[] = await Role.findByIds(userRolesInput.roleIds);
-    if (roles.length < userRolesInput.roleIds.length) {
-      failureResponse.message = `${
-        failureResponse.message
-      } One or more roles selected could not be found. No roles were set.`;
-      return failureResponse;
-    }
-
-    let user = await User.findOne(userRolesInput.userId, { where: { active: true } });
-    if (!user) {
-      failureResponse.message = `${failureResponse.message} The user could not be found.`;
-      return failureResponse;
-    }
-
-    user.roles = roles;
-    const result = await this.dbOperation(user.save);
-    if (!result.success || !result.object) return failureResponse;
-    user = result.object;
-
-    return {
-      success: true,
-      message: `Set ${userRolesInput.roleIds.length} roles to user successfully.`,
-      data: user
-    };
+    return this.updateOne({}, userRolesInput.userId, {
+      relations: [{ key: 'roles', ids: userRolesInput.roleIds, tableName: 'role' }]
+    });
   }
 
   @Authorized(['user:update'])

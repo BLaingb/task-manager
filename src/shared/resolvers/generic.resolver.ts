@@ -168,11 +168,6 @@ export abstract class GenericResolver<Model extends BaseEntity> {
       const saved = await object.save();
       return { object: saved };
     } catch (error) {
-      console.group();
-      console.error('Error in saveToDB');
-      console.error(error);
-      console.error('Object: ', object);
-      console.groupEnd();
       return {
         errors: [`Error ${error.code}: [${error.name}] ${error.message}`]
       };
@@ -181,7 +176,7 @@ export abstract class GenericResolver<Model extends BaseEntity> {
 
   protected async saveRelations<T extends BaseEntity = Model>(
     object: T,
-    relations: Array<{ key: string; ids: string[]; tableName: string }>
+    relations: Array<{ key: string; id?: string; ids?: string[]; tableName: string }>
   ): Promise<OperationResult<T>> {
     const errors: string[] = [];
     // Save relations in transaction
@@ -192,14 +187,14 @@ export abstract class GenericResolver<Model extends BaseEntity> {
         // and getting the repository fails. Need to look for a better
         // way to pass the Entity, maybe if I could get a way to pass the class?
         try {
-          console.log('In here');
-          const relationshipObjects = await t.getRepository(rel.tableName).findByIds(rel.ids);
-          object[rel.key] = relationshipObjects;
+          if (rel.id) {
+            const relationshipObject = await t.getRepository(rel.tableName).findOneOrFail(rel.id);
+            object[rel.key] = relationshipObject;
+          } else if (rel.ids) {
+            const relationshipObjects = await t.getRepository(rel.tableName).findByIds(rel.ids);
+            object[rel.key] = relationshipObjects;
+          }
         } catch (error) {
-          console.group();
-          console.error('Error in saveRelations');
-          console.error(error);
-          console.groupEnd();
           errors.push(error.message);
           return false;
         }
