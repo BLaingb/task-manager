@@ -16,16 +16,15 @@
     "pretty": true,
     "removeComments": true,
     "skipLibCheck": true,
-    "strictPropertyInitialization": false,
     "typeRoots": ["node_modules/@types", "src/@types"],
-    "lib": ["es2015"]
+    "lib": ["ES2016", "ESNext.AsyncIterable"],
+    "strictPropertyInitialization": false
   },
   "files": ["src/@types/graphql.d.ts"],
-  "include": ["src/**/*", "tests/verifiedProspect/verifiedProspect.test.ts", "seeds/**/*", "migration/*"],
+  "include": ["src/**/*"],
   "exclude": [
     "node_modules",
     "seedsBuild",
-    "build",
-    "**/*.spec.ts"
+    "build"
   ]
 }

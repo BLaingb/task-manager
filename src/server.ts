@@ -10,13 +10,15 @@ import { ApolloServer } from 'apollo-server-express';
 import * as GraphiQL from 'apollo-server-module-graphiql';
 import * as cors from 'cors';
 import * as express from 'express';
-import { createConnection } from 'typeorm';
+
 import { execute, subscribe } from 'graphql';
 import { createServer, Server } from 'http';
 import { SubscriptionServer } from 'subscriptions-transport-ws';
 import * as url from 'url';
-import { getUser } from './auth';
+import * as ejwt from 'express-jwt';
 import { createSchema } from './schema';
+import { createConnection } from 'typeorm';
+import { jwtSecret } from './shared/auth';
 
 type ExpressGraphQLOptionsFunction = (req?: express.Request, res?: express.Response) => any | Promise<any>;
 
@@ -56,18 +58,30 @@ export default async (port: number): Promise<Server> => {
   // frontend url:
   let corsOrigin: string[] = ['http://localhost:3000'];
   if (process.env.NODE_ENV === 'develop-ci') {
-    corsOrigin = ['https://frontend-develop-dot-phoenix-development-2020.wl.r.appspot.com'];
+    corsOrigin = [''];
   } else if (process.env.NODE_ENV === 'staging') {
-    corsOrigin = ['https://frontend-staging-dot-phoenix-development-2020.wl.r.appspot.com'];
+    corsOrigin = [''];
   } else if (process.env.NODE_ENV === 'production') {
-    corsOrigin = ['https://origenes.natgas.com.mx'];
+    corsOrigin = [''];
   }
 
   app.use(
     '*',
     cors({
       origin: corsOrigin
-    })
+    }),
+    ejwt({
+      secret: jwtSecret(),
+      credentialsRequired: false
+    }),
+    (err: any, _: any, res: any, next: any) => {
+      // Handle UnauthorizedError for expired or invalid tokens
+      if (err.name === 'UnauthorizedError') {
+        res.status(err.status).send({ message: 'There was a problem with your session. Please log in again.' });
+        return;
+      }
+      next();
+    }
   );
 
   const schema = await createSchema();
@@ -75,23 +89,12 @@ export default async (port: number): Promise<Server> => {
     playground: process.env.NODE_ENV !== 'production',
     introspection: process.env.NODE_ENV !== 'production',
     schema,
-    context: async ({ req }: any) => {
-      // get the user token from the headers
-      const token = req.headers.authorization || '';
-      let user: any;
-      if (token !== '') {
-        // try to retrieve a user with the token
-        await getUser(token.substring(7, token.length))
-          .then((response: any) => {
-            user = response;
-          })
-          .catch((error: any) => {
-            throw new Error(error);
-          });
-
-        // add the user to the context
-        return { user };
-      }
+    context: ({ req }: any) => {
+      const context = {
+        req,
+        token: req.user // `req.user` comes from `express-jwt`
+      };
+      return context;
     }
   });
 
