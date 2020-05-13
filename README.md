@@ -12,6 +12,12 @@ npm install
 ```
 
 ## Environment Variables
+Important configuration variables to set in project:
+ * NODE_ENV: development | staging | production
+ * JWT_ISSUER: Issuer for generating and verifying Auth tokens.
+ * JWT_EXPIRATION: Expiration time for creating new tokens.
+ * JWT_REFRESH_EXPIRATION: Expiration time for session refresh tokens.
+ * PORT: Port on which the application will run.
 
 ## Database Seed
 
