@@ -92,47 +92,6 @@ export class UserResolver extends GenericResolver<User> {
   @Authorized(['user:update'])
   @Mutation(() => UserResponse)
   public async updateUser(@Arg('userInput') userInput: UserInput): Promise<UserResponse> {
-    const failureResponse: UserResponse = {
-      success: false,
-      message: 'An error ocurred while updating a user.'
-    };
-
-    if (!userInput.id)
-      return {
-        ...failureResponse,
-        message: `${failureResponse.message} A user id was not provided.`
-      };
-
-    let user = await User.findOne(userInput.id);
-    if (!user)
-      return {
-        ...failureResponse,
-        message: `${failureResponse.message} The user to update does not exist.`
-      };
-
-    user.email = userInput.email;
-    user.firstName = userInput.email;
-    user.lastName = userInput.lastName;
-    user.profilePicture = userInput.lastName;
-
-    const errors = await this.validationErrors(user);
-    if (errors)
-      return {
-        ...failureResponse,
-        errors
-      };
-
-    const result = await this.dbOperation(user.save);
-    if (!result.success || !result.object) {
-      failureResponse.message = `A user with email ${user.email} already exists.`;
-      return failureResponse;
-    }
-    user = result.object;
-
-    return {
-      success: true,
-      message: 'User updated succesfully.',
-      data: user
-    };
+    return this.updateOne(userInput, userInput.id);
   }
 }
