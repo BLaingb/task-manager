@@ -1,4 +1,4 @@
-import { Arg, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
+import { Arg, Authorized, FieldResolver, Mutation, Query, Resolver, Root } from 'type-graphql';
 import { PaginationInput } from '../../shared/inputs/pagination.input';
 import { GenericResolver } from '../../shared/resolvers/generic.resolver';
 import { User } from '../../users/models/user.model';
@@ -19,17 +19,19 @@ export class ClientResolver extends GenericResolver<Client> {
     return client.user;
   }
 
+  @Authorized(['client:list'])
   @Query(() => ClientPagination)
   public async clients(@Arg('paginationInput') paginationInput: PaginationInput): Promise<ClientPagination> {
     return this.findPaginated(paginationInput);
   }
 
+  @Authorized(['client:view'])
   @Query(() => Client, { nullable: true })
-  public async client(@Arg('id') id: string): Promise<Client | undefined> {
-    return Client.findOne(id);
+  public async client(@Arg('userId') userId: string): Promise<Client | undefined> {
+    return Client.findOne({ where: { user: userId } });
   }
 
-  // @Authorized(['client:create'])
+  @Authorized(['client:create'])
   @Mutation(() => ClientResponse)
   public async createClient(@Arg('clientInput') clientInput: ClientInput): Promise<ClientResponse> {
     return this.createOne(

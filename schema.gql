@@ -87,7 +87,7 @@ type Query {
   permissions(paginationInput: PaginationInput!): PermissionPagination!
   permission(id: String!): Permission
   clients(paginationInput: PaginationInput!): ClientPagination!
-  client(id: String!): Client
+  client(userId: String!): Client
 }
 
 input RefreshTokenInput {
