@@ -10,7 +10,14 @@
     "build": "tsc -p tsconfig.json",
     "gcp-build": "npm run build",
     "serve": "nodemon",
-    "test": "mocha tests/*.test.js"
+    "test": "mocha tests/*.test.js",
+    "migrate": "npm run build && npx typeorm migration:run",
+    "makemigrations": "npm run build && npx typeorm migration:generate -n",
+    "showmigrations": "npx typeorm migration:show",
+    "revertmigrations": "npx typeorm migration:revert",
+    "schema:drop": "npx typeorm schema:drop",
+    "schema:sync": "npx typeorm schema:sync",
+    "typeorm": "npx typeorm"
   },
   "engines": {
     "node": ">=10.0.0"
