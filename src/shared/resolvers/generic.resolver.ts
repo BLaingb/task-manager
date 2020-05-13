@@ -61,26 +61,84 @@ export abstract class GenericResolver<Model extends BaseEntity> {
       message: `An error ocurred while creating a new [${this.className}].`
     };
 
-    let model = this.repository.create({
+    const model = this.repository.create({
       ...input,
       id: undefined
     });
 
+    const response = await this.saveObject(model, options);
+    if (!response.success || !response.data)
+      return {
+        ...failureResponse,
+        ...response
+      };
+
+    return {
+      ...response,
+      message: `[${this.className}] created succesfully.`
+    };
+  }
+
+  protected async updateOne(
+    values: DeepPartial<Model>,
+    id?: string,
+    options: OperationOptions<Model> = {}
+  ): Promise<{ success: boolean; message?: string; data?: Model; errors?: string[] }> {
+    const failureResponse = {
+      success: false,
+      message: `An error ocurred while updating a [${this.className}].`
+    };
+
+    if (!id)
+      return {
+        ...failureResponse,
+        errors: ['No object id was provided']
+      };
+
+    const model = await this.repository.findOne(id);
+    if (!model)
+      return {
+        ...failureResponse,
+        errors: [`An object of type [${this.className}] with id [${id}] does not exist.`]
+      };
+
+    Object.assign(model, values);
+    const response = await this.saveObject(model, options);
+
+    if (!response.success || !response.data)
+      return {
+        ...failureResponse,
+        ...response
+      };
+
+    return {
+      ...response,
+      message: `[${this.className}] updated succesfully.`
+    };
+  }
+
+  protected async saveObject(
+    model: Model,
+    options: OperationOptions<Model>,
+    defaultResponse: { success: boolean; data?: Model; errors?: string[] } = {
+      success: false
+    }
+  ) {
     if (options.preValidationFn) model = await options.preValidationFn(model);
 
     const errors = await this.validationErrors(model);
     if (errors)
       return {
-        ...failureResponse,
+        ...defaultResponse,
         errors
       };
 
     if (options.preSaveFn) model = await options.preSaveFn(model);
 
-    const response = await this.save(model);
+    const response = await this.saveToDB(model);
     if (response.errors)
       return {
-        ...failureResponse,
+        ...defaultResponse,
         errors: response.errors
       };
     if (response.object) model = response.object;
@@ -89,7 +147,7 @@ export abstract class GenericResolver<Model extends BaseEntity> {
       const saveRelationsResult = await this.saveRelations(model, options.relations);
       if (saveRelationsResult.errors)
         return {
-          ...failureResponse,
+          ...defaultResponse,
           errors: saveRelationsResult.errors
         };
 
@@ -105,11 +163,16 @@ export abstract class GenericResolver<Model extends BaseEntity> {
     };
   }
 
-  protected async save<T extends BaseEntity = Model>(object: T): Promise<OperationResult<T>> {
+  protected async saveToDB<T extends BaseEntity = Model>(object: T): Promise<OperationResult<T>> {
     try {
       const saved = await object.save();
       return { object: saved };
     } catch (error) {
+      console.group();
+      console.error('Error in saveToDB');
+      console.error(error);
+      console.error('Object: ', object);
+      console.groupEnd();
       return {
         errors: [`Error ${error.code}: [${error.name}] ${error.message}`]
       };
@@ -129,15 +192,20 @@ export abstract class GenericResolver<Model extends BaseEntity> {
         // and getting the repository fails. Need to look for a better
         // way to pass the Entity, maybe if I could get a way to pass the class?
         try {
+          console.log('In here');
           const relationshipObjects = await t.getRepository(rel.tableName).findByIds(rel.ids);
           object[rel.key] = relationshipObjects;
         } catch (error) {
+          console.group();
+          console.error('Error in saveRelations');
+          console.error(error);
+          console.groupEnd();
           errors.push(error.message);
           return false;
         }
 
         // Save the object, after relations have been added.
-        const response = await this.save(object);
+        const response = await this.saveToDB(object);
         if (response.errors) {
           errors.push(...errors);
           return false;
